@@ -14,7 +14,10 @@
 			"xutility": "cpp",
 			"charconv": "cpp",
 			"tuple": "cpp",
-			"initializer_list": "cpp"
+			"initializer_list": "cpp",
+			"format": "cpp",
+			"xloctime": "cpp",
+			"deque": "cpp"
 		}
 	}
 }
