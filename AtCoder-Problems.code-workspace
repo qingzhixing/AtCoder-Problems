@@ -4,5 +4,17 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"*.nasm": "nasm",
+			"xstring": "cpp",
+			"iostream": "cpp",
+			"xiosbase": "cpp",
+			"xlocale": "cpp",
+			"xutility": "cpp",
+			"charconv": "cpp",
+			"tuple": "cpp",
+			"initializer_list": "cpp"
+		}
+	}
 }
