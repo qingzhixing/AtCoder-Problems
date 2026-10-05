@@ -1,110 +1,71 @@
 #include <iostream>
+#include <vector>
+#include <ranges>
+#include <atcoder/scc>
 using namespace std;
-
-#error TODO:Wrong Answer.
 
 const int MAX_N = 2e5 + 10;
 
 int n, q;
 
-int parent[MAX_N];
-int dist[MAX_N];
-
-int find_root(int id)
-{
-	if (parent[id] == id)
-	{
-		return id;
-	}
-
-	int p = parent[id];
-	int root = find_root(p);
-
-	dist[id] += dist[p];
-	parent[id] = root;
-
-	return root;
-}
-
 int main()
 {
 	cin >> n >> q;
 
-	// 初始化并查集
-	for (int i = 1; i <= n; i++)
-	{
-		parent[i] = i;
-		dist[i] = 0;
-	}
+	atcoder::scc_graph scc(n);
 
-	bool wrong_answer = false;
+	// 储存严格小于号的边, from, to
+	vector<pair<int, int>> strict_edge;
+
 	while (q--)
 	{
 		int t, u, v;
+
 		cin >> t >> u >> v;
 
-		// 答案已知错误则跳过
-		if (wrong_answer)
+		// to 0-indexed
+		--u;
+		--v;
+
+		// 建立一条 u -> v 的边，表示 A[u] <= A[v];
+		scc.add_edge(u, v);
+
+		// 若 t = 1, 记录严格边
+		if (t == 1)
 		{
-			continue;
-		}
-
-		int root_u = find_root(u);
-		int root_v = find_root(v);
-
-		// 连接 v -> u = t
-
-		// 合并两个集合
-		if (root_u != root_v)
-		{
-			int delta = dist[u] + t - dist[v];
-
-			// 保证 dist 始终非负
-			if (delta >= 0)
-			{
-				parent[root_v] = root_u;
-				dist[root_v] = delta;
-			}
-			else
-			{
-				parent[root_u] = root_v;
-				dist[root_u] = -delta;
-			}
-		}
-		else
-		{
-			// 检验答案是否正确
-			if (!((t && dist[u] < dist[v]) || (!t && dist[u] <= dist[v])))
-			{
-				// printf("Wrong answer judging t=%d, u=%d, v=%d\n", t, u, v);
-				// printf("dist[%d] = %d, dist[%d] = %d\n", u, dist[u], v, dist[v]);
-				wrong_answer = true;
-			}
+			strict_edge.push_back({u, v});
 		}
 	}
-	if (wrong_answer)
+
+	// 获取拓扑排序后的强连通分量
+	auto components = scc.scc();
+
+	vector<int> value(n);
+
+	// 计算每个点的值
+	for (int idx = 0; idx < (int)components.size(); idx++)
 	{
-		cout << "No" << endl;
-		return 0;
+		for (int id : components[idx])
+		{
+			// 环内数字必然相等，每个点的值为其强连通分量的编号值
+			value[id] = idx + 1;
+		}
 	}
 
-	// 检查每个点到 root 的距离
-	for (int i = 1; i <= n; i++)
+	// 检测每个严格边是否满足小于关系
+	for (const auto &[from, to] : strict_edge)
 	{
-		find_root(i);
-		// printf("dist[%d]=%d\n", i, dist[i]);
-		if (dist[i] >= n)
+		// 在同一个强连通分量里则不成立
+		if (value[from] == value[to])
 		{
 			cout << "No" << endl;
 			return 0;
 		}
 	}
-
-	// 输出每个点的距离
 	cout << "Yes" << endl;
-	for (int i = 1; i <= n; i++)
+	for (int i = 0; i < n; i++)
 	{
-		cout << dist[i] + 1 << ' ';
+		cout << value[i] << ' ';
 	}
 	cout << endl;
 	return 0;
