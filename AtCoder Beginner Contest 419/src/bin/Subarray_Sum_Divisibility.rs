@@ -1,5 +1,4 @@
 use std::io::{self, Read, Write};
-use std::iter;
 use std::str::{FromStr, SplitAsciiWhitespace};
 
 const _MAX_N: usize = 510;
