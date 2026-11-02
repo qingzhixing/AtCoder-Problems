@@ -107,7 +107,45 @@ fn solution(tokens: &mut SplitAsciiWhitespace) {
 
     // 统计答案
     let mut result = 0usize;
-    compile_error!("TODO: Unimplemented.");
+    // 当前已遍历的其他分支离中心点距离为 diam / 2 的点的颜色频率
+    let mut color_total_freq = vec![0usize; n];
+
+    // 从 current 往后继续遍历，统计答案
+    for &branch in &adj[center] {
+        // 当前分支中符合要求的点
+        let mut valid_points: Vec<usize> = Vec::new();
+
+        // 当前迭代栈
+        let mut stack = vec![(branch, center)];
+        while let Some((current, parent)) = stack.pop() {
+            if dist[current] == diam / 2 {
+                valid_points.push(current);
+            }
+
+            // 往后扩展
+            for &nxt in &adj[current] {
+                if nxt == parent {
+                    continue;
+                }
+                stack.push((nxt, current));
+            }
+        }
+
+        // 结算点
+        for &point in &valid_points {
+            let color = colors[point];
+            // 答案增加 其他分支上颜色相同的点的频率
+            result += color_total_freq[color];
+        }
+
+        // 将当前分支的点加入统计
+        for &point in &valid_points {
+            let color = colors[point];
+            color_total_freq[color] += 1;
+        }
+    }
+
+    println!("{result}");
 }
 
 fn main() {
