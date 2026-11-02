@@ -14,7 +14,7 @@ fn next_str(tokens: &mut SplitAsciiWhitespace) -> Vec<char> {
 }
 
 fn solution(tokens: &mut SplitAsciiWhitespace) {
-    let mut n: usize = next(tokens);
+    let n: usize = next(tokens);
 
     // 将每条边插入一个新的节点，这样我们之后求的树的直径一定为偶数
     // 0 - indexed
