@@ -16,113 +16,94 @@ fn next_str(tokens: &mut SplitAsciiWhitespace) -> Vec<char> {
 fn solution(tokens: &mut SplitAsciiWhitespace) {
     let n: usize = next(tokens);
 
-    // 将每条边插入一个新的节点，这样我们之后求的树的直径一定为偶数
-    // 0 - indexed
-    let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n * 2 - 1];
+    // 在每个点之间插入一个虚拟节点，让直径确定为偶数
+    let mut adj = vec![Vec::<usize>::new(); n * 2 - 1];
     for i in 0..n - 1 {
-        let mut u: usize = next(tokens);
-        let mut v: usize = next(tokens);
+        let u: usize = next(tokens);
+        let v: usize = next(tokens);
 
         // 0 - indexed
-        u -= 1;
-        v -= 1;
-
-        // u v 之间插入一个 w
+        let u = u - 1;
+        let v = v - 1;
         let w = n + i;
+
+        // u v 之间插入 w
         adj[u].push(w);
         adj[v].push(w);
         adj[w].push(u);
         adj[w].push(v);
     }
-    let adj = adj;
 
-    // 所有点的颜色
-    // 虚拟节点颜色默认为 0, 没影响，因为它不可能为叶子节点。
     let mut colors = vec![0usize; n * 2 - 1];
     for i in 0..n {
-        let mut color: usize = next(tokens);
-
-        // color 从 0 开始, 方便作为下标索引
-        color -= 1;
-
+        let color = next(tokens);
         colors[i] = color;
     }
     let colors = colors;
 
-    // 将 n 变为插入虚拟节点之后的数量
+    // 变为总点数
     let n = n * 2 - 1;
 
-    // 从 root 开始进行 bfs, 求各点到 root 的距离
+    // 从 root 出发，求各点到 root 的长度
     let bfs_dist = |root: usize| -> Vec<usize> {
         let mut dist = vec![n; n];
         dist[root] = 0;
-
         let mut q = VecDeque::from([root]);
+
         while let Some(current) = q.pop_front() {
+            let current_dist = dist[current];
             for &nxt in &adj[current] {
-                if dist[nxt] > dist[current] + 1 {
-                    dist[nxt] = dist[current] + 1;
+                if dist[nxt] > current_dist + 1 {
+                    dist[nxt] = current_dist + 1;
                     q.push_back(nxt);
                 }
             }
         }
+
         dist
     };
 
-    // dist 当中最远的那个点
-    let furthest_id =
-        |dist: &Vec<usize>| dist.iter().enumerate().max_by_key(|&(_, &v)| v).unwrap().0;
+    let furthest_idx =
+        |dist: &Vec<usize>| -> usize { dist.iter().enumerate().max_by_key(|e| e.1).unwrap().0 };
 
-    // 求数的直径
+    // BFS 求直径
     let dist0 = bfs_dist(0);
-    // 直径端点之一
-    let v1 = furthest_id(&dist0);
-    // 所有点到 v1 的距离
+    let v1 = furthest_idx(&dist0);
     let dist1 = bfs_dist(v1);
-    // 直径端点之一
-    let v2 = furthest_id(&dist1);
-    // 所有点到 v2 的距离
+    let v2 = furthest_idx(&dist1);
     let dist2 = bfs_dist(v2);
 
-    // 树的直径
     let diam = dist2[v1];
-    // 由于插入虚拟节点，树的直径长度一定为偶数
-    assert!(diam % 2 == 0);
+    // 直径一定为偶数
+    debug_assert!(diam % 2 == 0);
 
-    // 寻找树的中心
-    let mut center = n + 1;
+    // 求树的中心
+    let mut center = 0usize;
     for i in 0..n {
-        // 到直径端点距离相等
         if dist1[i] == diam / 2 && dist2[i] == diam / 2 {
             center = i;
+            break;
         }
     }
     let center = center;
-    // 每个点到 center 的距离
     let dist = bfs_dist(center);
 
-    drop(dist0);
-    drop(dist1);
-    drop(dist2);
-
-    // 统计答案
+    // 从 center 进行 DFS，找到各分支满足条件的点，然后加入统计
+    // 当前已遍历的其他分支的颜色频率
+    let mut total_color_freq = vec![0usize; n];
     let mut result = 0usize;
-    // 当前已遍历的其他分支离中心点距离为 diam / 2 的点的颜色频率
-    let mut color_total_freq = vec![0usize; n];
 
-    // 从 current 往后继续遍历，统计答案
+    // 枚举各个分支进行 dfs
     for &branch in &adj[center] {
-        // 当前分支中符合要求的点
-        let mut valid_points: Vec<usize> = Vec::new();
+        let mut branch_valid_points: Vec<usize> = vec![];
 
-        // 当前迭代栈
+        // 调用栈 current, parent
         let mut stack = vec![(branch, center)];
         while let Some((current, parent)) = stack.pop() {
             if dist[current] == diam / 2 {
-                valid_points.push(current);
+                branch_valid_points.push(current);
             }
 
-            // 往后扩展
             for &nxt in &adj[current] {
                 if nxt == parent {
                     continue;
@@ -131,17 +112,16 @@ fn solution(tokens: &mut SplitAsciiWhitespace) {
             }
         }
 
-        // 结算点
-        for &point in &valid_points {
+        // 累计答案
+        for &point in &branch_valid_points {
             let color = colors[point];
-            // 答案增加 其他分支上颜色相同的点的频率
-            result += color_total_freq[color];
+            result += total_color_freq[color];
         }
 
-        // 将当前分支的点加入统计
-        for &point in &valid_points {
+        // 加入统计
+        for &point in &branch_valid_points {
             let color = colors[point];
-            color_total_freq[color] += 1;
+            total_color_freq[color] += 1;
         }
     }
 
