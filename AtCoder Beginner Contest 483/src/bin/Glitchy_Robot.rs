@@ -1,6 +1,8 @@
 use std::io::{self, Read};
 use std::str::{FromStr, SplitAsciiWhitespace};
 
+compile_error!("TODO: Unimplemented.");
+
 #[allow(dead_code)]
 fn next<T: FromStr>(tokens: &mut SplitAsciiWhitespace) -> T {
     tokens.next().unwrap().parse().ok().unwrap()
