@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 use std::str::{FromStr, SplitAsciiWhitespace};
+use std::{print, println, vec};
 
 #[allow(dead_code)]
 fn next<T: FromStr>(tokens: &mut SplitAsciiWhitespace) -> T {
@@ -11,28 +12,31 @@ fn next_str(tokens: &mut SplitAsciiWhitespace) -> Vec<char> {
     tokens.next().unwrap().chars().collect()
 }
 
-/// idx: 当前要填的位, sum: 先前已填入数字的价值和
 fn dfs(path: &mut Vec<usize>, idx: usize, sum: usize, n: usize, k: usize) {
-    // 最后一位
-    if idx == n - 1 {
-        let delta = k - sum;
-        // 没有合法方案直接抛弃当前方案
-        if delta % n != 0 {
-            return;
-        }
-        path[idx] = delta / n;
-
+    if idx > n {
+        // 输出 path
         for num in path {
-            print!("{} ", num);
+            print!("{num} ");
         }
         println!("");
         return;
     }
 
-    // 枚举当前能填入的所有数字
-    for num in 0..=((k - sum) / (idx + 1)) {
-        path[idx] = num;
-        dfs(path, idx + 1, sum + num * (idx + 1), n, k);
+    // 正在填充第 n 位
+    if idx == n {
+        // 此时无解
+        if (k - sum) % n != 0 {
+            return;
+        }
+        path[idx - 1] = (k - sum) / n;
+        dfs(path, idx + 1, k, n, k);
+        return;
+    }
+
+    // 枚举当前位置能选的所有数字
+    for num in 0..=(k - sum) / idx {
+        path[idx - 1] = num;
+        dfs(path, idx + 1, sum + idx * num, n, k);
     }
 }
 
@@ -41,7 +45,7 @@ fn solution(tokens: &mut SplitAsciiWhitespace) {
     let k: usize = next(tokens);
 
     let mut path = vec![0usize; n];
-    dfs(&mut path, 0, 0, n, k);
+    dfs(&mut path, 1, 0, n, k);
 }
 
 fn main() {

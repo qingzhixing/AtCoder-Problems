@@ -1,2 +1,3 @@
 [package]
 name = "abc473"
+edition = "2024"
