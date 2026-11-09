@@ -11,13 +11,6 @@ fn next_str(tokens: &mut SplitAsciiWhitespace) -> Vec<char> {
     tokens.next().unwrap().chars().collect()
 }
 
-#[derive(Clone, Copy)]
-struct Zone {
-    sum: i64,
-    start: i64,
-    end: i64,
-}
-
 fn solution(tokens: &mut SplitAsciiWhitespace) {
     let n: usize = next(tokens);
     let a: Vec<i64> = (0..n).map(|_| next(tokens)).collect();
