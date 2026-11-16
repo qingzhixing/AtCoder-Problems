@@ -17,68 +17,62 @@ fn next_str(tokens: &mut SplitAsciiWhitespace) -> Vec<char> {
 fn solution(tokens: &mut SplitAsciiWhitespace) {
     let n: usize = next(tokens);
     let m: usize = next(tokens);
-
-    // i 作为第一志愿时获得的票数
-    // 0 - indexed
+    // 第一志愿获票
     let mut votes = vec![0usize; n];
-    // 把 i 作为第一志愿的人的第二志愿
-    // 0 - indexed
-    let mut second_choice = vec![vec![]; n];
-
+    // 第一志愿为 i 的人的票会给 j
+    let mut gives_to = vec![vec![]; n];
     for _ in 0..m {
-        let first: usize = next(tokens);
-        let second: usize = next(tokens);
-        // to 0 - indexed
-        let first = first - 1;
-        let second = second - 1;
-
-        votes[first] += 1;
-        second_choice[first].push(second);
+        let a: usize = next(tokens);
+        let b: usize = next(tokens);
+        let a = a - 1;
+        let b = b - 1;
+        votes[a] += 1;
+        gives_to[a].push(b);
     }
 
-    // 统计作为第一志愿的最多票数的两个人
-    // id, votes
-    let mut c1 = (0usize, 0usize);
-    let mut c2 = (0usize, 0usize);
+    // 找到第一志愿最大的两个人
+    // idx, vote
+    let mut best1 = (0usize, 0usize);
+    let mut best2 = (0usize, 0usize);
     for (idx, &vote) in votes.iter().enumerate() {
-        if vote > c1.1 {
-            c2 = c1;
-            c1 = (idx, vote);
-        } else if vote > c2.1 {
-            c2 = (idx, vote);
+        if vote > best1.1 {
+            best2 = best1;
+            best1 = (idx, vote);
+        } else if vote > best2.1 {
+            best2 = (idx, vote);
         }
     }
 
-    // 模拟第 idx 人退选
-    for idx in 0..n {
+    // 模拟第 i 人推选
+    for i in 0..n {
         // 修改票数
-        for &second in &second_choice[idx] {
-            votes[second] += 1;
+        for &to in &gives_to[i] {
+            votes[to] += 1;
         }
-        let original_vote = votes[idx];
-        votes[idx] = 0;
+        let original_votes_i = votes[i];
+        votes[i] = 0;
 
-        // 只比较票数变化的人和初始的最大两人
-        let check_idx_list = second_choice[idx]
+        // 参与排序的只有第二志愿以及原来的第一二大
+        let check_list = gives_to[i]
             .iter()
             .copied()
-            .chain(once(c1.0))
-            .chain(once(c2.0));
+            .chain(once(best1.0))
+            .chain(once(best2.0));
 
-        let max_idx = check_idx_list
+        let result = check_list
             .map(|idx| (votes[idx], Reverse(idx)))
             .max()
             .unwrap()
             .1
-            .0;
+            .0
+            + 1;
 
-        // 1 - indexed
-        println!("{}", max_idx + 1);
+        println!("{result}");
 
-        // 状态还原：撤销之前的转移，供下一次循环使用
-        votes[idx] = original_vote;
-        for &second in &second_choice[idx] {
-            votes[second] -= 1;
+        // 还原现场
+        votes[i] = original_votes_i;
+        for &to in &gives_to[i] {
+            votes[to] -= 1;
         }
     }
 }
